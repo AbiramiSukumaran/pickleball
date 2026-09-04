@@ -1,0 +1,1789 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spanner Omni Pickleball Game - Continuous Rule Arena</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 0.7; filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.7)); }
+      50% { opacity: 1; filter: drop-shadow(0 0 20px rgba(16, 185, 129, 1)); }
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 5px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    .active-shot-btn {
+      border-color: #38bdf8 !important;
+      background: rgba(30, 41, 59, 0.95) !important;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(56, 189, 248, 0.4);
+    }
+  </style>
+</head>
+
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-emerald-500 selection:text-white flex flex-col">
+
+  <!-- Top Header & Navigation Bar -->
+  <header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-50 px-5 sm:px-8 py-2.5 flex items-center justify-between gap-4">
+    <!-- Brand -->
+    <div class="flex items-center gap-3 shrink-0">
+      <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-sm shadow-sm">
+        🏓
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="font-bold text-sm sm:text-base tracking-tight text-white">Spanner Omni Pickleball</h1>
+          <span class="text-[10px] font-mono bg-slate-800/80 text-slate-300 border border-slate-700/50 px-1.5 py-0.5 rounded font-medium">60 FPS</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="flex items-center bg-slate-900/90 border border-slate-800 p-1 rounded-xl gap-1 shrink-0">
+      <button onclick="switchTab('arena')" id="tabArenaBtn" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition bg-slate-800 text-white border border-slate-700/60 shadow-sm">
+        <i class="fa-solid fa-table-tennis-paddle-ball text-emerald-400 text-xs"></i>
+        <span>Arena</span>
+      </button>
+      <button onclick="switchTab('bookings')" id="tabBookingsBtn" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition text-slate-400 hover:text-slate-200 border border-transparent">
+        <i class="fa-solid fa-calendar text-xs"></i>
+        <span>Reservations</span>
+      </button>
+      <button onclick="switchTab('concierge')" id="tabConciergeBtn" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition text-slate-400 hover:text-slate-200 border border-transparent">
+        <i class="fa-solid fa-brain text-xs"></i>
+        <span>AI Concierge</span>
+      </button>
+    </nav>
+
+    <!-- Right Controls -->
+    <div class="flex items-center gap-2.5 shrink-0">
+      <!-- Bot Difficulty Selector -->
+      <div class="flex items-center gap-1.5 bg-slate-900 border border-slate-800 px-2.5 py-1.5 rounded-lg text-xs">
+        <span class="text-slate-400 text-[11px]">Bot:</span>
+        <select id="botDifficulty" onchange="updateBotDifficulty()" class="bg-transparent text-slate-200 text-xs font-medium focus:outline-none cursor-pointer">
+          <option value="3.0" class="bg-slate-900">3.0 Rec</option>
+          <option value="4.0" class="bg-slate-900">4.0 Comp</option>
+          <option value="5.0" selected class="bg-slate-900">5.0 Pro</option>
+          <option value="6.0" class="bg-slate-900">6.0 Champ</option>
+        </select>
+      </div>
+
+      <!-- Live Sound Toggle -->
+      <button onclick="toggleAudio()" id="soundBtn" class="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-300 hover:text-white transition flex items-center gap-1.5" title="Toggle Sound">
+        <i class="fa-solid fa-volume-high text-slate-400" id="soundIcon"></i>
+        <span id="soundText" class="text-[11px] hidden md:inline">Audio</span>
+      </button>
+
+      <!-- Status Indicator -->
+      <div class="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-900/60 border border-slate-800 text-[11px] text-slate-400">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="text-slate-300 font-medium">Omni Live</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Game Arena -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 flex flex-col">
+
+    <!-- TAB 1: 2.5D GAME ARENA VIEW -->
+    <div id="viewArena" class="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full">
+      <!-- LEFT: Visual Pickleball Court Canvas & Characters (7 Cols) -->
+      <section class="lg:col-span-7 space-y-4 flex flex-col">
+        
+        <!-- Court Container Card -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-2xl relative overflow-hidden flex-1 flex flex-col justify-between">
+          
+          <!-- Scoreboard & Speed Radar Bar -->
+          <div class="flex items-center justify-between pb-3 border-b border-slate-800 text-xs">
+            <!-- Character Scoreboard -->
+            <div class="flex items-center gap-3 sm:gap-4">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-indigo-400"></span>
+                <span class="text-indigo-300 font-semibold" id="botBadgeLabel">OmniBot (5.0):</span>
+                <span class="text-base font-bold font-mono text-white px-2 py-0.5 bg-slate-950 border border-slate-800 rounded" id="botScore">0</span>
+              </div>
+              <span class="text-slate-600 font-mono">VS</span>
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                <span class="text-emerald-300 font-semibold">You:</span>
+                <span class="text-base font-bold font-mono text-white px-2 py-0.5 bg-slate-950 border border-slate-800 rounded" id="playerScore">0</span>
+              </div>
+              <!-- Server indicator -->
+              <span id="serverIndicator" class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-semibold">You Serving</span>
+            </div>
+
+            <!-- Live Telemetry Radar -->
+            <div class="flex items-center gap-2 sm:gap-3">
+              <div class="bg-slate-950 px-2.5 py-1 rounded-md border border-slate-800 font-mono text-[11px] text-amber-400 flex items-center gap-1.5">
+                <i class="fa-solid fa-gauge-high text-xs"></i>
+                <span id="speedRadar">0.0 MPH</span>
+              </div>
+              <div id="rallyBadge" class="bg-emerald-950/60 text-emerald-300 px-2.5 py-1 rounded-md border border-emerald-500/30 font-semibold font-mono text-[11px]">
+                Rally: 0
+              </div>
+            </div>
+          </div>
+
+          <!-- 2.5D Animated Court Canvas with Interactive Controls -->
+          <div class="relative w-full my-3 flex items-center justify-center bg-slate-950/70 rounded-xl p-2 border border-slate-800/80 group">
+            <canvas id="courtCanvas" width="580" height="420" class="w-full max-w-[580px] h-auto rounded-lg shadow-2xl cursor-crosshair"></canvas>
+            
+            <!-- Tactical Overlay Pill -->
+            <div id="courtOverlayPill" class="absolute top-4 left-1/2 -translate-x-1/2 bg-slate-900/90 border border-slate-700 backdrop-blur-md px-3.5 py-1.5 rounded-full text-xs font-mono text-slate-200 shadow-2xl opacity-0 transition-opacity duration-300 pointer-events-none flex items-center gap-2">
+              <span id="pillIcon">🏓</span>
+              <span id="pillText">Ready for Serve</span>
+            </div>
+
+            <!-- Serve / Action Callout Modal (When Point Ends or Ready to Serve) -->
+            <div id="servePromptOverlay" class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center gap-3 p-4 transition-all duration-300">
+              <div class="text-center space-y-1">
+                <div id="promptFaultTitle" class="text-xs font-mono uppercase tracking-wider text-amber-400 font-bold">Point Ready</div>
+                <h2 id="promptHeadline" class="text-lg sm:text-xl font-black text-white">Your Serve (Crosscourt)</h2>
+                <p id="promptSubtext" class="text-xs text-slate-300 max-w-sm">Serve diagonally over the 7ft Kitchen NVZ. The 2-Bounce Rule is in effect!</p>
+              </div>
+              <button onclick="startServicePoint()" id="btnServeAction" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-500/30 flex items-center gap-2 transition-transform active:scale-95">
+                <span>🎾 Serve Ball</span>
+                <span class="text-[10px] font-mono opacity-80 bg-slate-950/20 px-1.5 py-0.5 rounded">(Spacebar)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Interactive Real-Time Shot Selector Deck -->
+          <div class="space-y-2 pt-1">
+            <div class="flex items-center justify-between text-xs text-slate-400 px-1">
+              <span class="font-semibold uppercase tracking-wider text-[11px] text-slate-300 flex items-center gap-1.5">
+                <i class="fa-solid fa-gamepad text-emerald-400"></i> Next Hit Selection
+                <span class="text-[10px] text-slate-500 font-normal">(Auto-hits on paddle arrival or keys 1-4)</span>
+              </span>
+              <div class="flex items-center gap-2">
+                <label class="text-[11px] text-slate-400 flex items-center gap-1 cursor-pointer">
+                  <span>Spin:</span>
+                  <select id="spinSelector" class="bg-slate-950 border border-slate-700 rounded px-1.5 py-0.5 text-slate-200 text-xs">
+                    <option value="Topspin">Topspin</option>
+                    <option value="Backspin">Backspin / Slice</option>
+                    <option value="Flat">Flat Speed</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <!-- 1. Kitchen Soft Dink -->
+              <button onclick="setSelectedShotType('dink')" id="optDink" class="shot-control-btn active-shot-btn group p-2.5 bg-slate-800/80 border border-slate-700/80 rounded-xl transition flex flex-col items-center gap-1.5 shadow">
+                <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm group-hover:scale-110 transition">
+                  <i class="fa-solid fa-feather"></i>
+                </div>
+                <div class="text-center">
+                  <div class="text-xs font-bold text-white group-hover:text-emerald-300">[1] Kitchen Dink</div>
+                  <div class="text-[10px] text-slate-400 font-mono">18.5 mph • NVZ Drop</div>
+                </div>
+              </button>
+
+              <!-- 2. 3rd-Shot Drop -->
+              <button onclick="setSelectedShotType('drop')" id="optDrop" class="shot-control-btn group p-2.5 bg-slate-800/80 hover:bg-indigo-950/60 border border-slate-700/80 hover:border-indigo-500 rounded-xl transition flex flex-col items-center gap-1.5 shadow">
+                <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-sm group-hover:scale-110 transition">
+                  <i class="fa-solid fa-parachute-box"></i>
+                </div>
+                <div class="text-center">
+                  <div class="text-xs font-bold text-white group-hover:text-indigo-300">[2] 3rd-Shot Drop</div>
+                  <div class="text-[10px] text-slate-400 font-mono">26.0 mph • High Arc</div>
+                </div>
+              </button>
+
+              <!-- 3. Forehand Speedup -->
+              <button onclick="setSelectedShotType('speedup')" id="optSpeedup" class="shot-control-btn group p-2.5 bg-slate-800/80 hover:bg-rose-950/60 border border-slate-700/80 hover:border-rose-500 rounded-xl transition flex flex-col items-center gap-1.5 shadow">
+                <div class="w-8 h-8 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center text-sm group-hover:scale-110 transition">
+                  <i class="fa-solid fa-bolt"></i>
+                </div>
+                <div class="text-center">
+                  <div class="text-xs font-bold text-white group-hover:text-rose-300">[3] Speedup</div>
+                  <div class="text-[10px] text-slate-400 font-mono">48.0 mph • Body Punch</div>
+                </div>
+              </button>
+
+              <!-- 4. Offensive Lob -->
+              <button onclick="setSelectedShotType('lob')" id="optLob" class="shot-control-btn group p-2.5 bg-slate-800/80 hover:bg-amber-950/60 border border-slate-700/80 hover:border-amber-500 rounded-xl transition flex flex-col items-center gap-1.5 shadow">
+                <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-sm group-hover:scale-110 transition">
+                  <i class="fa-solid fa-cloud-arrow-up"></i>
+                </div>
+                <div class="text-center">
+                  <div class="text-xs font-bold text-white group-hover:text-amber-300">[4] High Lob</div>
+                  <div class="text-[10px] text-slate-400 font-mono">29.5 mph • Deep Line</div>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Real-Time Spanner Graph Edge & DDL Pipeline Log -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-2">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-xs uppercase tracking-wider text-indigo-400 flex items-center gap-2">
+              <i class="fa-solid fa-diagram-project"></i> Spanner Omni Graph Pipeline (ISO GQL)
+            </h3>
+            <span class="text-[10px] font-mono text-slate-500">MATCH (s:Shot)-[:TRANSITIONED_TO]->(r:Response)</span>
+          </div>
+          <div id="spannerLog" class="font-mono text-[11px] text-slate-300 bg-slate-950 p-3 rounded-xl border border-slate-800 h-24 overflow-y-auto space-y-1 custom-scrollbar">
+            <p class="text-slate-500">// Connected to Spanner Omni node @ localhost:9010</p>
+            <p class="text-emerald-400">// Official Continuous Match Ready. Click Serve or press Spacebar to start!</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT: Gemini Flash Agentic Coaching & Telemetry Breakdown (5 Cols) -->
+      <section class="lg:col-span-5 space-y-4 flex flex-col">
+        
+        <!-- AI Tactical Breakdown Card -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl flex-1 flex flex-col space-y-4">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-xs shadow-sm">
+                <i class="fa-solid fa-brain"></i>
+              </div>
+              <div>
+                <h3 class="font-bold text-sm text-white">Gemini Tactical Coach</h3>
+                <p class="text-[10px] text-emerald-300">Live Spanner Omni Graph Grounded</p>
+              </div>
+            </div>
+            <span class="text-[10px] font-mono bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-semibold" id="aiStatusBadge">Live Referee</span>
+          </div>
+
+          <!-- Dynamic AI Feedback Narrative -->
+          <div class="p-4 bg-slate-950 border border-slate-800/80 rounded-xl flex-1 overflow-y-auto custom-scrollbar space-y-3">
+            <div class="flex items-center gap-2 text-xs font-semibold text-emerald-400">
+              <i class="fa-solid fa-comment-dots"></i>
+              <span id="coachTitle">Continuous Match Briefing</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed" id="coachText">
+              Welcome to the official <strong>Spanner Omni Pickleball Arena</strong>. Move your paddle with <strong>Mouse or Arrow Keys / WASD</strong>. Rallies continue uninterrupted until a player faults (NVZ Kitchen Volley, Two-Bounce Rule violation, Out of Bounds, or Net Ball). When a point ends, Gemini provides instant referee and tactical coaching!
+            </p>
+          </div>
+
+          <!-- Match Live State & DUPR Metrics -->
+          <div class="grid grid-cols-2 gap-3">
+            <div class="p-3 bg-indigo-950/40 border border-indigo-800/50 rounded-xl space-y-1">
+              <span class="text-[10px] text-indigo-400 uppercase font-bold tracking-wider flex items-center gap-1">
+                <i class="fa-solid fa-robot"></i> OmniBot Strategy
+              </span>
+              <p class="text-xs font-bold text-white" id="botShotVal">Counter-Puncher</p>
+              <p class="text-[10px] text-indigo-300 font-mono" id="botSpeedVal">5.0 DUPR • Active</p>
+            </div>
+            <div class="p-3 bg-teal-950/40 border border-teal-800/50 rounded-xl space-y-1">
+              <span class="text-[10px] text-teal-400 uppercase font-bold tracking-wider flex items-center gap-1">
+                <i class="fa-solid fa-bullseye"></i> Current Rule Phase
+              </span>
+              <p class="text-xs font-bold text-white" id="phaseRuleVal">Service Play</p>
+              <p class="text-[10px] text-teal-300 font-mono" id="bounceCountVal">Double-Bounce Rule Active</p>
+            </div>
+          </div>
+
+          <!-- Node & Graph Stats Box -->
+          <div class="p-3.5 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2 text-xs font-mono">
+            <div class="flex items-center justify-between text-slate-400 text-[11px]">
+              <span>Spanner Shot Nodes:</span>
+              <span class="text-emerald-400 font-bold" id="userNodeId">s_ready...</span>
+            </div>
+            <div class="flex items-center justify-between text-slate-400 text-[11px]">
+              <span>OmniBot Counter Node:</span>
+              <span class="text-indigo-400 font-bold" id="botNodeId">s_bot_ready...</span>
+            </div>
+            <div class="flex items-center justify-between text-slate-400 text-[11px]">
+              <span>Graph Transition Edge:</span>
+              <span class="text-amber-400 font-bold" id="edgeId">t_edge_ready...</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- TAB 2: COURT RESERVATIONS & FACILITY HUB VIEW -->
+    <div id="viewBookings" class="hidden grid-cols-1 lg:grid-cols-12 gap-6 w-full">
+      <!-- LEFT: Book Court Form & Available Courts (5 Cols) -->
+      <section class="lg:col-span-5 space-y-4">
+        <!-- New Reservation Card -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl space-y-4">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+            <h3 class="font-bold text-sm text-white flex items-center gap-2">
+              <i class="fa-solid fa-calendar-plus text-emerald-400"></i> Book a Court Slot
+            </h3>
+            <span class="text-[10px] font-mono bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-semibold">ACID Protected</span>
+          </div>
+
+          <form id="bookingForm" onsubmit="handleCreateBooking(event)" class="space-y-3 text-xs">
+            <div>
+              <label class="block text-slate-400 font-semibold mb-1">Select Court:</label>
+              <select id="bookCourtId" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white focus:outline-none focus:border-emerald-500">
+                <option value="1">Court 1: Center Championship Court ($45/hr • Acrylic)</option>
+                <option value="2">Court 2: Grandstand Court 2 ($30/hr • Outdoor)</option>
+                <option value="3">Court 3: Training Pavilion Court 3 ($35/hr • Indoor)</option>
+              </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-slate-400 font-semibold mb-1">Date:</label>
+                <input type="date" id="bookDate" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2 text-white focus:outline-none focus:border-emerald-500" required>
+              </div>
+              <div>
+                <label class="block text-slate-400 font-semibold mb-1">Player Name:</label>
+                <input type="text" id="bookPlayerName" value="You (Challenger)" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2 text-white focus:outline-none focus:border-emerald-500" required>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-slate-400 font-semibold mb-1">Start Hour (24h):</label>
+                <select id="bookStartHour" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2 text-white focus:outline-none focus:border-emerald-500">
+                  <option value="8">8:00 AM</option>
+                  <option value="9">9:00 AM</option>
+                  <option value="10">10:00 AM</option>
+                  <option value="11">11:00 AM</option>
+                  <option value="14" selected>2:00 PM</option>
+                  <option value="15">3:00 PM</option>
+                  <option value="16">4:00 PM</option>
+                  <option value="17">5:00 PM</option>
+                  <option value="18">6:00 PM</option>
+                  <option value="19">7:00 PM</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-slate-400 font-semibold mb-1">End Hour:</label>
+                <select id="bookEndHour" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2 text-white focus:outline-none focus:border-emerald-500">
+                  <option value="9">9:00 AM</option>
+                  <option value="10">10:00 AM</option>
+                  <option value="11">11:00 AM</option>
+                  <option value="12">12:00 PM</option>
+                  <option value="15" selected>3:00 PM</option>
+                  <option value="16">4:00 PM</option>
+                  <option value="17">5:00 PM</option>
+                  <option value="18">6:00 PM</option>
+                  <option value="19">7:00 PM</option>
+                  <option value="20">8:00 PM</option>
+                </select>
+              </div>
+            </div>
+
+            <button type="submit" id="btnSubmitBooking" class="w-full py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center justify-center gap-2">
+              <i class="fa-solid fa-lock"></i> Reserve with Spanner ACID Transaction
+            </button>
+          </form>
+
+          <div id="bookingResultMsg" class="hidden p-3 rounded-xl text-xs font-mono"></div>
+        </div>
+
+        <!-- Facility Court Specs Cards -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl space-y-3">
+          <h3 class="font-bold text-xs uppercase tracking-wider text-slate-400 flex items-center gap-2">
+            <i class="fa-solid fa-building"></i> Facility Courts List
+          </h3>
+          <div id="courtsListContainer" class="space-y-2 text-xs">
+            <div class="p-3 bg-slate-950 border border-slate-800 rounded-xl flex items-center justify-between">
+              <div>
+                <div class="font-bold text-white">Center Championship Court</div>
+                <div class="text-[11px] text-slate-400">Indoor • Pro-Cushion Acrylic • Lights Active</div>
+              </div>
+              <span class="text-emerald-400 font-mono font-bold">$45.00/hr</span>
+            </div>
+            <div class="p-3 bg-slate-950 border border-slate-800 rounded-xl flex items-center justify-between">
+              <div>
+                <div class="font-bold text-white">Grandstand Court 2</div>
+                <div class="text-[11px] text-slate-400">Outdoor • Hardcourt Surface • Lights Active</div>
+              </div>
+              <span class="text-emerald-400 font-mono font-bold">$30.00/hr</span>
+            </div>
+            <div class="p-3 bg-slate-950 border border-slate-800 rounded-xl flex items-center justify-between">
+              <div>
+                <div class="font-bold text-white">Training Pavilion Court 3</div>
+                <div class="text-[11px] text-slate-400">Indoor • High-Grip Synthetic • Climate Control</div>
+              </div>
+              <span class="text-emerald-400 font-mono font-bold">$35.00/hr</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT: Confirmed Reservations & Open Matchmaking (7 Cols) -->
+      <section class="lg:col-span-7 space-y-4">
+        <!-- Confirmed Schedule Table -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl space-y-3">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+            <h3 class="font-bold text-sm text-white flex items-center gap-2">
+              <i class="fa-solid fa-clipboard-list text-indigo-400"></i> Confirmed Bookings (Live Spanner Table)
+            </h3>
+            <button onclick="loadBookingsData()" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-[11px] rounded-lg text-slate-300 transition">
+              <i class="fa-solid fa-rotate"></i> Refresh
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs font-mono">
+              <thead class="text-slate-400 border-b border-slate-800 bg-slate-950/60">
+                <tr>
+                  <th class="p-2.5">Court</th>
+                  <th class="p-2.5">Date</th>
+                  <th class="p-2.5">Time</th>
+                  <th class="p-2.5">Player</th>
+                  <th class="p-2.5">Status</th>
+                  <th class="p-2.5 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody id="bookingsTableBody" class="divide-y divide-slate-800/60 text-slate-300">
+                <tr>
+                  <td colspan="6" class="p-4 text-center text-slate-500">Loading bookings from Cloud Spanner...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Open Matchmaking Lobbies -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl space-y-3">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+            <h3 class="font-bold text-sm text-white flex items-center gap-2">
+              <i class="fa-solid fa-users text-amber-400"></i> Open Matchmaking Lobbies (DUPR Matchups)
+            </h3>
+          </div>
+          <div id="matchesContainer" class="space-y-2.5 text-xs">
+            <div class="p-3 bg-slate-950 border border-slate-800 rounded-xl flex items-center justify-between">
+              <div>
+                <div class="font-bold text-white flex items-center gap-2">
+                  <span>Alex Rivera (DUPR 4.0)</span>
+                  <span class="text-[10px] font-mono bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded">Doubles</span>
+                </div>
+                <div class="text-[11px] text-slate-400">Center Championship Court • 10:00 AM • 2 Spots Open</div>
+              </div>
+              <button onclick="handleJoinMatch(1)" class="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 rounded-lg text-xs font-semibold transition">
+                Join Match
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- TAB 3: AI CONCIERGE & CHAT VIEW -->
+    <div id="viewConcierge" class="hidden grid-cols-1 lg:grid-cols-12 gap-6 w-full">
+      <!-- Chat Interface (8 Cols) -->
+      <section class="lg:col-span-8 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl flex flex-col space-y-4 min-h-[560px]">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-base shadow-sm">
+              <i class="fa-solid fa-comments"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-sm text-white">Spanner Omni AI Concierge</h3>
+              <p class="text-[11px] text-slate-400">Grounded in Live Facility SQL & Rules Database</p>
+            </div>
+          </div>
+          <span class="text-[10px] font-mono bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-full font-semibold">Gemini + Spanner RAG</span>
+        </div>
+
+        <!-- Chat History Stream -->
+        <div id="chatHistory" class="flex-1 bg-slate-950 border border-slate-800/80 rounded-xl p-4 overflow-y-auto custom-scrollbar space-y-3.5 max-h-[380px]">
+          <!-- Welcome Message -->
+          <div class="flex items-start gap-3">
+            <div class="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-xs shrink-0">
+              🤖
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-3.5 rounded-2xl text-xs text-slate-200 space-y-1.5 max-w-xl">
+              <p class="font-bold text-emerald-400">👋 Welcome to Spanner Omni Pickleball Concierge!</p>
+              <p class="leading-relaxed">I am your real-time assistant directly connected to the facility's Spanner database. Ask me about court availability, surfaces, reservation times, or official pickleball rules (NVZ Kitchen rules, 2-Bounce rule, DUPR matchmaking)!</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Prompt Chips -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+          <button onclick="askConcierge('How did I do in my recent matches against OmniBot?')" class="px-2.5 py-1 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 rounded-full text-amber-300 shrink-0 transition font-medium">
+            📊 How did I do?
+          </button>
+          <button onclick="askConcierge('Recommend the best indoor court for an advanced session')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-full text-slate-300 shrink-0 transition">
+            💡 Recommend indoor court
+          </button>
+          <button onclick="askConcierge('What confirmed bookings exist in Spanner today?')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-full text-slate-300 shrink-0 transition">
+            📅 Check today's bookings
+          </button>
+          <button onclick="askConcierge('Explain the Kitchen NVZ rule and momentum faults')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-full text-slate-300 shrink-0 transition">
+            📖 Kitchen rule pro-tips
+          </button>
+        </div>
+
+        <!-- Chat Input Bar -->
+        <form onsubmit="handleChatSubmit(event)" class="flex items-center gap-2 pt-1">
+          <input type="text" id="chatInput" placeholder="Ask about match performance, court availability, or rules..." class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500" required>
+          <button type="submit" id="chatSendBtn" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center gap-1.5">
+            <span>Send</span>
+            <i class="fa-solid fa-paper-plane text-xs"></i>
+          </button>
+        </form>
+      </section>
+
+      <!-- RIGHT: RAG Database Context Inspector (4 Cols) -->
+      <section class="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl space-y-4">
+        <h3 class="font-bold text-xs uppercase tracking-wider text-slate-400 flex items-center gap-2">
+          <i class="fa-solid fa-database text-amber-400"></i> Live Spanner Grounding State
+        </h3>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Every concierge query executes a real-time snapshot transaction against Spanner Omni tables (<code>GameSessions</code>, <code>Courts</code>, <code>Bookings</code>, <code>Shots</code>), injecting live ACID data directly into Gemini's system instruction.
+        </p>
+
+        <div class="p-3 bg-slate-950 border border-slate-800 rounded-xl space-y-2 font-mono text-[11px]">
+          <div class="text-emerald-400 font-bold flex items-center justify-between">
+            <span>// Live Tables Synced</span>
+            <span>OK</span>
+          </div>
+          <div class="text-slate-400 space-y-1">
+            <p>• SELECT * FROM GameSessions (Match Records)</p>
+            <p>• SELECT * FROM Shots (Shot Graph Telemetry)</p>
+            <p>• SELECT * FROM Courts</p>
+            <p>• SELECT * FROM Bookings WHERE status = 'CONFIRMED'</p>
+            <p>• SELECT * FROM MatchRequests</p>
+          </div>
+        </div>
+
+        <div class="p-3 bg-emerald-950/20 border border-emerald-800/30 rounded-xl text-xs text-emerald-200">
+          <span class="font-bold flex items-center gap-1.5 text-emerald-300">
+            <i class="fa-solid fa-shield-halved"></i> Zero Hallucination
+          </span>
+          <p class="text-[11px] text-slate-300 mt-1">Court rates, surface specifications, and confirmed reservation times are strictly verified against database state.</p>
+        </div>
+      </section>
+    </div>
+
+  </main>
+
+  <!-- Sound & Visual Game Logic -->
+  <script>
+    // ==========================================
+    // 1. Synthesized Web Audio API FX
+    // ==========================================
+    let audioCtx = null;
+    let audioEnabled = true;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function toggleAudio() {
+      audioEnabled = !audioEnabled;
+      document.getElementById("soundIcon").className = audioEnabled ? "fa-solid fa-volume-high text-emerald-400" : "fa-solid fa-volume-xmark text-slate-500";
+      document.getElementById("soundText").innerText = audioEnabled ? "Audio FX On" : "Audio FX Muted";
+      if (audioEnabled) initAudio();
+    }
+
+    function playPaddlePop(freq = 480, type = 'sine') {
+      if (!audioEnabled || !audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(140, audioCtx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.08);
+    }
+
+    function playBounceSound() {
+      if (!audioEnabled || !audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.06);
+      gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.06);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.06);
+    }
+
+    function playFaultSound() {
+      if (!audioEnabled || !audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+      osc.frequency.linearRampToValueAtTime(90, audioCtx.currentTime + 0.25);
+      gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.25);
+    }
+
+    function playSpeedupSwoosh() {
+      if (!audioEnabled || !audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(320, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.12);
+    }
+
+    function playNetHitSound() {
+      if (!audioEnabled || !audioCtx) return;
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.12);
+        gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.13);
+      } catch (e) { }
+    }
+
+    // ==========================================
+    // 2. Continuous Match Engine & Pickleball Rules
+    // ==========================================
+    const canvas = document.getElementById("courtCanvas");
+    const ctx = canvas.getContext("2d");
+
+    // Court Boundary Constants
+    const COURT_LEFT = 110;
+    const COURT_RIGHT = 470;
+    const COURT_TOP = 40;
+    const COURT_BOTTOM = 380;
+    const NET_Y = 210;
+    const KITCHEN_TOP = 155;
+    const KITCHEN_BOTTOM = 265;
+
+    // Difficulty Settings: [speedLerp, reachRadius, unforcedErrorRate, shotVariance, name]
+    const DIFFICULTY_PROFILES = {
+      '3.0': { speed: 0.075, reach: 90, errorRate: 0.32, variance: 36, label: "OmniBot (3.0 Rec)", strategy: "Casual Returner" },
+      '4.0': { speed: 0.11, reach: 105, errorRate: 0.16, variance: 22, label: "OmniBot (4.0 Challenger)", strategy: "Balanced Competitor" },
+      '5.0': { speed: 0.14, reach: 120, errorRate: 0.05, variance: 12, label: "OmniBot (5.0 Pro)", strategy: "Counter-Puncher" },
+      '6.0': { speed: 0.18, reach: 135, errorRate: 0.01, variance: 4, label: "OmniBot (6.0 Ben Johns)", strategy: "Tournament Champion" }
+    };
+
+    let currentDifficulty = '5.0';
+
+    function updateBotDifficulty() {
+      const sel = document.getElementById("botDifficulty").value;
+      currentDifficulty = sel;
+      const profile = DIFFICULTY_PROFILES[sel];
+      document.getElementById("botBadgeLabel").innerText = `${profile.label}:`;
+      document.getElementById("botSpeedVal").innerText = `${sel} DUPR • Active`;
+      document.getElementById("botShotVal").innerText = profile.strategy;
+      showPill(`Bot Level Set to ${profile.label}`, "🤖");
+    }
+
+    // Match Scores & Rules State
+    let playerScore = 0;
+    let botScore = 0;
+    let currentServer = 'player'; // 'player' or 'bot'
+    let gameState = 'READY_TO_SERVE'; // 'READY_TO_SERVE', 'RALLYING', 'POINT_OVER'
+    let rallyCount = 0;
+    let shotHistory = [];
+    let selectedShotType = 'dink'; // 'dink', 'drop', 'speedup', 'lob'
+
+    // Ball & Bounces Tracking for Pickleball 2-Bounce Rule
+    let bouncesInCurrentSide = 0;
+    let lastSideNet = 'none'; // 'top' (bot side) or 'bottom' (player side)
+    let isVolleyLegal = false; // Becomes true after double bounce (Shot 1 and Shot 2 bounce)
+
+    const zones = {
+      z_baseline_opp_left: { x: 190, y: 75, name: "Opponent Baseline Left" },
+      z_baseline_opp_right: { x: 390, y: 75, name: "Opponent Baseline Right" },
+      z_kitchen_opp_left: { x: 210, y: 175, name: "Opponent NVZ Left" },
+      z_kitchen_opp_right: { x: 370, y: 175, name: "Opponent NVZ Right" },
+      z_kitchen_left: { x: 210, y: 250, name: "Left Kitchen (NVZ)" },
+      z_kitchen_right: { x: 370, y: 250, name: "Right Kitchen (NVZ)" },
+      z_mid_left: { x: 200, y: 300, name: "Mid-Court Left" },
+      z_mid_right: { x: 380, y: 300, name: "Mid-Court Right" },
+      z_baseline_left: { x: 190, y: 355, name: "Baseline Left" },
+      z_baseline_right: { x: 390, y: 355, name: "Baseline Right" }
+    };
+
+    const player = {
+      x: 290,
+      y: 350,
+      targetX: 290,
+      targetY: 350,
+      swingProgress: 0,
+      isSwinging: false,
+      inKitchen: false
+    };
+
+    const bot = {
+      x: 290,
+      y: 70,
+      targetX: 290,
+      targetY: 70,
+      swingProgress: 0,
+      isSwinging: false,
+      inKitchen: false
+    };
+
+    const ball = {
+      x: 290,
+      y: 350,
+      z: 0,
+      startX: 290,
+      startY: 350,
+      targetX: 370,
+      targetY: 175,
+      progress: 1,
+      speed: 0.028,
+      maxHeight: 35,
+      trail: [],
+      active: false,
+      hitter: 'player', // 'player' or 'bot'
+      shotType: 'Serve',
+      hasBouncedThisFlight: false
+    };
+
+    let particles = [];
+
+    function addParticles(x, y, color, count = 10) {
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x, y,
+          vx: (Math.random() - 0.5) * 4,
+          vy: (Math.random() - 0.5) * 4,
+          life: 1.0,
+          color
+        });
+      }
+    }
+
+    // Keyboard & Mouse Movement Listeners
+    const keys = {};
+    window.addEventListener("keydown", (e) => {
+      // If user is focused on any text input, textarea, select, or contenteditable, ignore game shortcuts
+      const tag = (e.target && e.target.tagName) ? e.target.tagName.toUpperCase() : '';
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (e.target && e.target.isContentEditable)) {
+        return;
+      }
+
+      // If user is not currently on the Arena tab, ignore game shortcuts
+      const viewArena = document.getElementById("viewArena");
+      if (viewArena && viewArena.classList.contains("hidden")) {
+        return;
+      }
+
+      keys[e.key] = true;
+      if (e.code === "Space") {
+        e.preventDefault();
+        if (gameState !== 'RALLYING') {
+          startServicePoint();
+        }
+      }
+      if (e.key === "1") setSelectedShotType('dink');
+      if (e.key === "2") setSelectedShotType('drop');
+      if (e.key === "3") setSelectedShotType('speedup');
+      if (e.key === "4") setSelectedShotType('lob');
+    });
+
+    window.addEventListener("keyup", (e) => {
+      const tag = (e.target && e.target.tagName) ? e.target.tagName.toUpperCase() : '';
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (e.target && e.target.isContentEditable)) {
+        return;
+      }
+      keys[e.key] = false;
+    });
+
+    canvas.addEventListener("mousemove", (e) => {
+      if (gameState === 'RALLYING') {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const mouseX = (e.clientX - rect.left) * scaleX;
+        const mouseY = (e.clientY - rect.top) * scaleY;
+
+        // Restrict player to their half of court
+        player.targetX = Math.max(COURT_LEFT + 15, Math.min(COURT_RIGHT - 15, mouseX));
+        player.targetY = Math.max(NET_Y + 10, Math.min(COURT_BOTTOM + 15, mouseY));
+      }
+    });
+
+    canvas.addEventListener("click", () => {
+      if (gameState !== 'RALLYING') {
+        startServicePoint();
+      }
+    });
+
+    function setSelectedShotType(type) {
+      selectedShotType = type;
+      document.querySelectorAll(".shot-control-btn").forEach(btn => btn.classList.remove("active-shot-btn"));
+      const map = { dink: 'optDink', drop: 'optDrop', speedup: 'optSpeedup', lob: 'optLob' };
+      if (map[type]) {
+        document.getElementById(map[type]).classList.add("active-shot-btn");
+      }
+    }
+
+    // ==========================================
+    // 3. Game State & Serve Flow
+    // ==========================================
+    function startServicePoint() {
+      initAudio();
+      gameState = 'RALLYING';
+      rallyCount = 0;
+      shotHistory = [];
+      bouncesInCurrentSide = 0;
+      isVolleyLegal = false;
+      document.getElementById("servePromptOverlay").classList.add("opacity-0", "pointer-events-none");
+      document.getElementById("rallyBadge").innerText = "Rally: 0";
+      document.getElementById("phaseRuleVal").innerText = "Serve In Play";
+      document.getElementById("bounceCountVal").innerText = "2-Bounce Rule in Effect";
+
+      if (currentServer === 'player') {
+        // Player Serves Crosscourt to Bot Right Box
+        player.x = 220;
+        player.y = COURT_BOTTOM - 10;
+        player.targetX = player.x;
+        player.targetY = player.y;
+
+        showPill("You: Underhand Crosscourt Serve", "🏓");
+        launchBall('player', 'Crosscourt Serve', player.x, player.y, 370, 160, 24.0, 0.025, 45, 'drop');
+        playPaddlePop(450, 'sine');
+      } else {
+        // Bot Serves Crosscourt to Player Right Box
+        bot.x = 370;
+        bot.y = COURT_TOP + 10;
+        bot.targetX = bot.x;
+        bot.targetY = bot.y;
+
+        showPill("OmniBot: Crosscourt Serve", "🤖");
+        launchBall('bot', 'OmniBot Serve', bot.x, bot.y, 220, 260, 24.0, 0.025, 45, 'drop');
+        playPaddlePop(380, 'triangle');
+      }
+    }
+
+    function launchBall(hitter, shotName, startX, startY, targetX, targetY, speedMph, flightSpeed, arcHeight, category) {
+      ball.hitter = hitter;
+      ball.shotType = shotName;
+      ball.startX = startX;
+      ball.startY = startY;
+      ball.targetX = targetX;
+      ball.targetY = targetY;
+      ball.progress = 0;
+      ball.speed = flightSpeed;
+      ball.maxHeight = arcHeight;
+      ball.active = true;
+      ball.hasBouncedThisFlight = false;
+
+      document.getElementById("speedRadar").innerText = `${speedMph.toFixed(1)} MPH`;
+      
+      shotHistory.push({
+        hitter,
+        shotName,
+        speedMph,
+        fromY: startY,
+        toY: targetY
+      });
+
+      const log = document.getElementById("spannerLog");
+      const nodeId = `s_${Math.random().toString(36).substring(2, 8)}`;
+      log.innerHTML += `<p class="${hitter === 'player' ? 'text-emerald-400' : 'text-indigo-300'}">> [Shot ${shotHistory.length}] ${hitter === 'player' ? 'Player' : 'OmniBot'}: <strong>${shotName}</strong> (${speedMph} mph) [${nodeId}]</p>`;
+      log.scrollTop = log.scrollHeight;
+    }
+
+    // ==========================================
+    // 4. Physics, Collision & Rule Checking Loop
+    // ==========================================
+    function updatePhysics() {
+      const profile = DIFFICULTY_PROFILES[currentDifficulty] || DIFFICULTY_PROFILES['5.0'];
+
+      // Keyboard input handling for player movement
+      if (gameState === 'RALLYING') {
+        const moveSpeed = 5.0;
+        if (keys["ArrowLeft"] || keys["a"] || keys["A"]) player.targetX -= moveSpeed;
+        if (keys["ArrowRight"] || keys["d"] || keys["D"]) player.targetX += moveSpeed;
+        if (keys["ArrowUp"] || keys["w"] || keys["W"]) player.targetY -= moveSpeed;
+        if (keys["ArrowDown"] || keys["s"] || keys["S"]) player.targetY += moveSpeed;
+
+        player.targetX = Math.max(COURT_LEFT + 15, Math.min(COURT_RIGHT - 15, player.targetX));
+        player.targetY = Math.max(NET_Y + 10, Math.min(COURT_BOTTOM + 15, player.targetY));
+      }
+
+      // Check player & bot kitchen state (NVZ is Y between KITCHEN_TOP and KITCHEN_BOTTOM)
+      player.inKitchen = player.y < KITCHEN_BOTTOM;
+      bot.inKitchen = bot.y > KITCHEN_TOP;
+
+      // Smooth Character Interpolation
+      player.x += (player.targetX - player.x) * 0.18;
+      player.y += (player.targetY - player.y) * 0.18;
+
+      bot.x += (bot.targetX - bot.x) * profile.speed;
+      bot.y += (bot.targetY - bot.y) * profile.speed;
+
+      if (player.isSwinging) {
+        player.swingProgress += 0.25;
+        if (player.swingProgress >= Math.PI) {
+          player.isSwinging = false;
+          player.swingProgress = 0;
+        }
+      }
+
+      if (bot.isSwinging) {
+        bot.swingProgress += 0.25;
+        if (bot.swingProgress >= Math.PI) {
+          bot.isSwinging = false;
+          bot.swingProgress = 0;
+        }
+      }
+
+      // Ball Trajectory Physics
+      if (ball.active && gameState === 'RALLYING') {
+        const prevY = ball.y;
+        ball.progress += ball.speed;
+
+        ball.x = ball.startX + (ball.targetX - ball.startX) * ball.progress;
+        ball.y = ball.startY + (ball.targetY - ball.startY) * ball.progress;
+        ball.z = Math.sin(ball.progress * Math.PI) * ball.maxHeight;
+
+        ball.trail.push({ x: ball.x, y: ball.y, z: ball.z });
+        if (ball.trail.length > 8) ball.trail.shift();
+
+        // Bot proactive tracking towards target landing area
+        if (ball.hitter === 'player') {
+          bot.targetX = ball.targetX;
+          bot.targetY = ball.targetY < KITCHEN_TOP ? 75 : 125;
+        }
+
+        // Net Collision Check (Only at the single frame when crossing NET_Y = 210)
+        const justCrossedNet = (ball.startY > NET_Y && prevY > NET_Y && ball.y <= NET_Y) || 
+                               (ball.startY < NET_Y && prevY < NET_Y && ball.y >= NET_Y);
+        if (justCrossedNet && ball.z < 8) {
+          playNetHitSound();
+          addParticles(ball.x, NET_Y, "#ef4444", 16);
+          endRally(ball.hitter === 'player' ? 'bot' : 'player', "Net Fault (Ball hit net cord)");
+          return;
+        }
+
+        // Two-Bounce rule tracking
+        if (shotHistory.length >= 3) {
+          isVolleyLegal = true;
+          document.getElementById("phaseRuleVal").innerText = "Open Play (Volleys Legal)";
+          document.getElementById("bounceCountVal").innerText = "NVZ Kitchen Rule Active";
+        }
+
+        // Ball Landing / Bounce Check
+        if (ball.progress >= 1.0) {
+          ball.hasBouncedThisFlight = true;
+          playBounceSound();
+          addParticles(ball.targetX, ball.targetY, "#facc15", 14);
+
+          // Check Out-of-Bounds Fault
+          if (ball.targetX < COURT_LEFT || ball.targetX > COURT_RIGHT || ball.targetY < COURT_TOP || ball.targetY > COURT_BOTTOM) {
+            endRally(ball.hitter === 'player' ? 'bot' : 'player', "Out of Bounds (Ball landed outside lines)");
+            return;
+          }
+
+          // When ball bounces on Bot side
+          if (ball.targetY < NET_Y) {
+            triggerBotReaction();
+          } 
+          // When ball bounces on Player side
+          else {
+            triggerPlayerReaction();
+          }
+        }
+      }
+
+      // Update Particles
+      particles.forEach((p, idx) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life -= 0.035;
+        if (p.life <= 0) particles.splice(idx, 1);
+      });
+    }
+
+    function triggerBotReaction() {
+      const profile = DIFFICULTY_PROFILES[currentDifficulty] || DIFFICULTY_PROFILES['5.0'];
+
+      // 1. Realistic Bot Physical Reach Check (Horizontal alignment)
+      const xDist = Math.abs(bot.x - ball.targetX);
+      if (xDist > profile.reach) {
+        addParticles(ball.x, ball.y, "#10b981", 16);
+        endRally('player', `Winner! (Clean passing shot — OmniBot unable to reach ball in time, x-offset: ${xDist.toFixed(0)}px)`);
+        return;
+      }
+
+      // 2. Kitchen Volley Fault Check for Bot
+      if (!ball.hasBouncedThisFlight && bot.inKitchen) {
+        endRally('player', "FAULT: OmniBot Kitchen Foot Fault (Volleyed out of air inside NVZ)");
+        return;
+      }
+
+      // 3. Pressure Mishit / Unforced Error Calculation
+      const isHardShot = ball.shotType.includes("Speedup") || ball.shotType.includes("Lob");
+      const effectiveErrorChance = isHardShot ? profile.errorRate * 1.5 : profile.errorRate;
+
+      if (Math.random() < effectiveErrorChance) {
+        bot.isSwinging = true;
+        bot.swingProgress = 0;
+        
+        const errType = Math.random();
+        if (errType < 0.5) {
+          // Mishit into the Net
+          playNetHitSound();
+          addParticles(290, NET_Y, "#ef4444", 16);
+          endRally('player', "OmniBot Fault: Hit into the net under pressure!");
+          return;
+        } else {
+          // Mishit Out of Bounds (long or wide)
+          playPaddlePop(490, 'triangle');
+          const outX = Math.random() > 0.5 ? COURT_RIGHT + 35 : COURT_LEFT - 35;
+          const outY = COURT_BOTTOM + 30;
+          showPill("OmniBot: Shot Sailed Out of Bounds!", "💨");
+          launchBall('bot', 'Overhit Out of Bounds', bot.x, bot.y, outX, outY, 38.0, 0.035, 30, 'speedup');
+          return;
+        }
+      }
+
+      // 4. Successful Bot Counter Execution
+      rallyCount++;
+      document.getElementById("rallyBadge").innerText = `Rally: ${rallyCount}`;
+
+      bot.isSwinging = true;
+      bot.swingProgress = 0;
+      playPaddlePop(420, 'triangle');
+
+      // Bot tactical selection
+      let botShot = "Crosscourt Roll Dink";
+      let targetX = 210 + (Math.random() - 0.5) * profile.variance;
+      let targetY = 250 + (Math.random() - 0.5) * profile.variance;
+      let flightSpeed = 0.03;
+      let height = 35;
+      let speed = 22.0;
+
+      if (ball.shotType.includes("Speedup")) {
+        botShot = "Forehand Body Punch Volley";
+        targetX = player.x + (Math.random() > 0.5 ? 25 : -25) + (Math.random() - 0.5) * profile.variance;
+        targetY = 280;
+        speed = 44.0;
+        flightSpeed = 0.045;
+        height = 20;
+      } else if (ball.shotType.includes("Lob")) {
+        botShot = "Overhead Smash";
+        targetX = (Math.random() > 0.5 ? 190 : 390) + (Math.random() - 0.5) * profile.variance;
+        targetY = 360;
+        speed = 52.0;
+        flightSpeed = 0.048;
+        height = 25;
+      } else {
+        botShot = "Kitchen Roll Dink";
+        targetX = (Math.random() > 0.5 ? 210 : 370) + (Math.random() - 0.5) * profile.variance;
+        targetY = 250;
+        speed = 19.5;
+        flightSpeed = 0.028;
+        height = 32;
+      }
+
+      showPill(`OmniBot: ${botShot}`, "🤖");
+      launchBall('bot', botShot, bot.x, bot.y, targetX, targetY, speed, flightSpeed, height, 'dink');
+    }
+
+    function triggerPlayerReaction() {
+      rallyCount++;
+      document.getElementById("rallyBadge").innerText = `Rally: ${rallyCount}`;
+
+      player.isSwinging = true;
+      player.swingProgress = 0;
+
+      // Check distance between player paddle and ball landing spot
+      const xDist = Math.abs(player.x - ball.targetX);
+      const yDist = Math.abs(player.y - ball.targetY);
+      if (xDist > 140 || yDist > 160) {
+        endRally('bot', `Missed Shot (Player unable to reach ball in time, offset: ${xDist.toFixed(0)}px)`);
+        return;
+      }
+
+      // Check Kitchen NVZ Volley Fault
+      if (!ball.hasBouncedThisFlight && player.inKitchen) {
+        endRally('bot', "FAULT: Kitchen Volley Violation (Volleyed out of air inside NVZ)");
+        return;
+      }
+
+      // Execute selected shot
+      let userShotName = "Kitchen Soft Dink";
+      let targetX = 370;
+      let targetY = 175;
+      let speed = 20.0;
+      let flightSpeed = 0.028;
+      let height = 35;
+
+      const spin = document.getElementById("spinSelector").value;
+
+      if (selectedShotType === 'speedup') {
+        userShotName = `Forehand Speedup (${spin})`;
+        targetX = bot.x + (Math.random() > 0.5 ? 20 : -20);
+        targetY = 130;
+        speed = 48.0;
+        flightSpeed = 0.045;
+        height = 18;
+        playSpeedupSwoosh();
+      } else if (selectedShotType === 'drop') {
+        userShotName = `3rd-Shot Drop (${spin})`;
+        targetX = 210;
+        targetY = 175;
+        speed = 26.0;
+        flightSpeed = 0.026;
+        height = 65;
+        playPaddlePop(520, 'sine');
+      } else if (selectedShotType === 'lob') {
+        userShotName = `Offensive High Lob (${spin})`;
+        targetX = Math.random() > 0.5 ? 190 : 390;
+        targetY = 75;
+        speed = 29.5;
+        flightSpeed = 0.022;
+        height = 95;
+        playPaddlePop(520, 'sine');
+      } else {
+        userShotName = `Crosscourt Soft Dink (${spin})`;
+        targetX = Math.random() > 0.5 ? 210 : 370;
+        targetY = 175;
+        speed = 18.5;
+        flightSpeed = 0.028;
+        height = 32;
+        playPaddlePop(520, 'sine');
+      }
+
+      showPill(`You: ${userShotName}`, "🏓");
+      launchBall('player', userShotName, player.x, player.y, targetX, targetY, speed, flightSpeed, height, selectedShotType);
+    }
+
+    // ==========================================
+    // 5. Point Conclusion & Gemini Coach Analysis
+    // ==========================================
+    function endRally(winner, faultReason) {
+      gameState = 'POINT_OVER';
+      ball.active = false;
+      playFaultSound();
+
+      if (winner === 'player') {
+        playerScore++;
+        document.getElementById("playerScore").innerText = playerScore;
+      } else {
+        botScore++;
+        document.getElementById("botScore").innerText = botScore;
+      }
+
+      // Rotate Server on side-out
+      currentServer = winner === 'player' ? 'player' : 'bot';
+      document.getElementById("serverIndicator").innerText = currentServer === 'player' ? "You Serving" : "OmniBot Serving";
+
+      // Display Overlay Modal
+      document.getElementById("promptFaultTitle").innerText = `Point Concluded • ${faultReason}`;
+      document.getElementById("promptHeadline").innerText = winner === 'player' ? "🎉 Point Won by You!" : "🤖 Point Won by OmniBot";
+      document.getElementById("promptSubtext").innerText = `Match Score: You ${playerScore} — OmniBot ${botScore} (Rally length: ${rallyCount} shots)`;
+      document.getElementById("servePromptOverlay").classList.remove("opacity-0", "pointer-events-none");
+
+      // Post-Rally Gemini AI Tactical Analysis & Spanner Commit
+      document.getElementById("coachTitle").innerText = `Referee & Coach: ${winner === 'player' ? 'Point Scored' : 'Fault Analysis'}`;
+      document.getElementById("coachText").innerHTML = `<em>Gemini Referee analyzing ${rallyCount}-shot rally exchange...</em>`;
+
+      fetch("/api/rally-end", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          winner,
+          fault_type: faultReason,
+          rally_length: rallyCount,
+          shot_sequence: shotHistory,
+          user_score: playerScore,
+          bot_score: botScore,
+          bot_difficulty: currentDifficulty
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.analysis) {
+          document.getElementById("coachText").innerHTML = data.analysis.replace(/\n/g, "<br>");
+          const log = document.getElementById("spannerLog");
+          log.innerHTML += `<p class="text-emerald-400">> Spanner Omni: Committed Rally Graph (${rallyCount} nodes, Score ${playerScore}-${botScore})</p>`;
+          log.scrollTop = log.scrollHeight;
+        }
+      })
+      .catch(err => {
+        document.getElementById("coachText").innerText = `Point to ${winner === 'player' ? 'You' : 'OmniBot'}. ${faultReason}. Maintain balance and stay patient at the non-volley zone line.`;
+      });
+    }
+
+    // ==========================================
+    // 6. 2.5D Court Canvas Renderer (60 FPS)
+    // ==========================================
+    function renderCourt() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Outer Ground
+      ctx.fillStyle = "#0a0e17";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Court Surface (Tournament Blue)
+      ctx.beginPath();
+      ctx.fillStyle = "#1e3a5f";
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.95)";
+      ctx.lineWidth = 3;
+      ctx.rect(COURT_LEFT, COURT_TOP, COURT_RIGHT - COURT_LEFT, COURT_BOTTOM - COURT_TOP);
+      ctx.fill();
+      ctx.stroke();
+
+      // 7ft Kitchen NVZ Area (Tournament Forest Green)
+      ctx.fillStyle = "#064e3b";
+      ctx.fillRect(COURT_LEFT, KITCHEN_TOP, COURT_RIGHT - COURT_LEFT, KITCHEN_BOTTOM - KITCHEN_TOP);
+
+      // Kitchen Dashed Lines
+      ctx.setLineDash([8, 6]);
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.75)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(COURT_LEFT, KITCHEN_TOP);
+      ctx.lineTo(COURT_RIGHT, KITCHEN_TOP);
+      ctx.moveTo(COURT_LEFT, KITCHEN_BOTTOM);
+      ctx.lineTo(COURT_RIGHT, KITCHEN_BOTTOM);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Center Line
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.85)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(290, COURT_TOP);
+      ctx.lineTo(290, KITCHEN_TOP);
+      ctx.moveTo(290, KITCHEN_BOTTOM);
+      ctx.lineTo(290, COURT_BOTTOM);
+      ctx.stroke();
+
+      // Kitchen Text Indicator
+      ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+      ctx.font = "bold 10px JetBrains Mono";
+      ctx.textAlign = "center";
+      ctx.fillText("7FT NON-VOLLEY ZONE (NVZ)", 290, 214);
+
+      // Net Shadow & Mesh
+      ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+      ctx.fillRect(COURT_LEFT - 15, NET_Y + 3, (COURT_RIGHT - COURT_LEFT) + 30, 6);
+
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.35)";
+      ctx.lineWidth = 1;
+      for (let x = COURT_LEFT - 10; x <= COURT_RIGHT + 10; x += 6) {
+        ctx.beginPath();
+        ctx.moveTo(x, NET_Y - 14);
+        ctx.lineTo(x, NET_Y);
+        ctx.stroke();
+      }
+
+      // Net Top White Cord
+      ctx.strokeStyle = "#f8fafc";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(COURT_LEFT - 15, NET_Y - 14);
+      ctx.lineTo(COURT_RIGHT + 15, NET_Y - 14);
+      ctx.stroke();
+
+      // Net Posts
+      ctx.fillStyle = "#64748b";
+      ctx.fillRect(COURT_LEFT - 18, NET_Y - 20, 6, 22);
+      ctx.fillRect(COURT_RIGHT + 12, NET_Y - 20, 6, 22);
+
+      // Draw Characters
+      drawOmniBot();
+      drawPlayer();
+
+      // Ball Trail
+      ball.trail.forEach((pt, idx) => {
+        const alpha = (idx / ball.trail.length) * 0.45;
+        ctx.fillStyle = `rgba(250, 204, 21, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y - pt.z, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Ball Drawing with 3D Shadow & Height
+      if (ball.active) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+        ctx.beginPath();
+        ctx.ellipse(ball.x, ball.y, 6 + ball.z * 0.1, 3.5 + ball.z * 0.05, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        const screenY = ball.y - ball.z;
+        const grad = ctx.createRadialGradient(ball.x - 2, screenY - 2, 1, ball.x, screenY, 6.5);
+        grad.addColorStop(0, "#fef08a");
+        grad.addColorStop(0.6, "#eab308");
+        grad.addColorStop(1, "#a16207");
+
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(ball.x, screenY, 6.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Particles
+      particles.forEach(p => {
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.life;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+      });
+
+      updatePhysics();
+      requestAnimationFrame(renderCourt);
+    }
+
+    function drawOmniBot() {
+      ctx.save();
+      ctx.translate(bot.x, bot.y);
+
+      // Shadow
+      ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+      ctx.beginPath();
+      ctx.ellipse(0, 14, 18, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Body & Legs
+      ctx.strokeStyle = "#4338ca";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(-6, 8);
+      ctx.lineTo(-8, 16);
+      ctx.moveTo(6, 8);
+      ctx.lineTo(8, 16);
+      ctx.stroke();
+
+      ctx.fillStyle = "#312e81";
+      ctx.strokeStyle = "#6366f1";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(-12, -10, 24, 20, 6);
+      ctx.fill();
+      ctx.stroke();
+
+      // Head
+      ctx.fillStyle = "#1e1b4b";
+      ctx.strokeStyle = "#818cf8";
+      ctx.beginPath();
+      ctx.roundRect(-10, -26, 20, 14, 4);
+      ctx.fill();
+      ctx.stroke();
+
+      // Visor Glow
+      ctx.fillStyle = currentDifficulty === '6.0' ? "#f43f5e" : (currentDifficulty === '3.0' ? "#a78bfa" : "#38bdf8");
+      ctx.fillRect(-6, -21, 12, 4);
+
+      // Paddle & Swing
+      ctx.save();
+      const swingOffset = bot.isSwinging ? Math.sin(bot.swingProgress) * 0.8 : 0;
+      ctx.rotate(swingOffset);
+
+      ctx.strokeStyle = "#818cf8";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(10, 4);
+      ctx.lineTo(20, 12);
+      ctx.stroke();
+
+      ctx.fillStyle = currentDifficulty === '6.0' ? "#e11d48" : "#6366f1";
+      ctx.strokeStyle = "#c7d2fe";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(18, 8, 12, 16, 4);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.fillStyle = "#c7d2fe";
+      ctx.font = "bold 9px JetBrains Mono";
+      ctx.textAlign = "center";
+      ctx.fillText(`OmniBot (${currentDifficulty})`, 0, -32);
+      ctx.restore();
+    }
+
+    function drawPlayer() {
+      ctx.save();
+      ctx.translate(player.x, player.y);
+
+      // Shadow
+      ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+      ctx.beginPath();
+      ctx.ellipse(0, 18, 18, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Legs
+      ctx.strokeStyle = "#064e3b";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(-6, 12);
+      ctx.lineTo(-8, 20);
+      ctx.moveTo(6, 12);
+      ctx.lineTo(8, 20);
+      ctx.stroke();
+
+      // Torso
+      ctx.fillStyle = "#059669";
+      ctx.strokeStyle = "#34d399";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(-11, -8, 22, 22, 6);
+      ctx.fill();
+      ctx.stroke();
+
+      // Head
+      ctx.fillStyle = "#fcd34d";
+      ctx.beginPath();
+      ctx.arc(0, -16, 9, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Cap
+      ctx.fillStyle = "#065f46";
+      ctx.beginPath();
+      ctx.arc(0, -19, 9, Math.PI, Math.PI * 2);
+      ctx.fill();
+      ctx.fillRect(-9, -19, 18, 3);
+
+      // Paddle & Swing
+      ctx.save();
+      const swingOffset = player.isSwinging ? -Math.sin(player.swingProgress) * 0.9 : 0;
+      ctx.rotate(swingOffset);
+
+      ctx.strokeStyle = "#fcd34d";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(9, -2);
+      ctx.lineTo(20, -10);
+      ctx.stroke();
+
+      ctx.fillStyle = "#10b981";
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(18, -24, 12, 16, 4);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.fillStyle = "#6ee7b7";
+      ctx.font = "bold 9px JetBrains Mono";
+      ctx.textAlign = "center";
+      ctx.fillText("You (4.5 DUPR)", 0, -29);
+      ctx.restore();
+    }
+
+    function showPill(text, icon) {
+      const pill = document.getElementById("courtOverlayPill");
+      document.getElementById("pillText").innerText = text;
+      document.getElementById("pillIcon").innerText = icon;
+      pill.classList.remove("opacity-0");
+      setTimeout(() => {
+        pill.classList.add("opacity-0");
+      }, 2000);
+    }
+
+    // ==========================================
+    // 7. Tab Navigation & Spanner Booking / Chat Hub
+    // ==========================================
+    function switchTab(tabId) {
+      const viewArena = document.getElementById("viewArena");
+      const viewBookings = document.getElementById("viewBookings");
+      const viewConcierge = document.getElementById("viewConcierge");
+
+      const btnArena = document.getElementById("tabArenaBtn");
+      const btnBookings = document.getElementById("tabBookingsBtn");
+      const btnConcierge = document.getElementById("tabConciergeBtn");
+
+      // Reset tabs styling
+      [btnArena, btnBookings, btnConcierge].forEach(btn => {
+        btn.className = "flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition text-slate-400 hover:text-slate-200 border border-transparent";
+      });
+
+      // Hide all views
+      viewArena.classList.add("hidden");
+      viewArena.classList.remove("grid");
+      viewBookings.classList.add("hidden");
+      viewBookings.classList.remove("grid");
+      viewConcierge.classList.add("hidden");
+      viewConcierge.classList.remove("grid");
+
+      if (tabId === 'arena') {
+        viewArena.classList.remove("hidden");
+        viewArena.classList.add("grid");
+        btnArena.className = "flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition bg-slate-800 text-white border border-slate-700/60 shadow-sm";
+      } else if (tabId === 'bookings') {
+        viewBookings.classList.remove("hidden");
+        viewBookings.classList.add("grid");
+        btnBookings.className = "flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition bg-slate-800 text-white border border-slate-700/60 shadow-sm";
+        loadBookingsData();
+      } else if (tabId === 'concierge') {
+        viewConcierge.classList.remove("hidden");
+        viewConcierge.classList.add("grid");
+        btnConcierge.className = "flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition bg-slate-800 text-white border border-slate-700/60 shadow-sm";
+      }
+    }
+
+    // Load Bookings Table & Courts
+    function loadBookingsData() {
+      const today = new Date().toISOString().split('T')[0];
+      const bookDateInput = document.getElementById("bookDate");
+      if (bookDateInput && !bookDateInput.value) {
+        bookDateInput.value = today;
+      }
+
+      fetch("/api/bookings")
+        .then(res => res.json())
+        .then(data => {
+          const tbody = document.getElementById("bookingsTableBody");
+          if (!data || data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-500">No confirmed bookings found in Spanner Omni. Reserve one now!</td></tr>`;
+            return;
+          }
+
+          let html = "";
+          data.forEach(b => {
+            const isConfirmed = b.status === "CONFIRMED";
+            html += `
+              <tr class="hover:bg-slate-950/40 transition">
+                <td class="p-2.5 font-bold text-white">${b.court_name || `Court ${b.court_id}`}</td>
+                <td class="p-2.5 text-slate-300">${b.booking_date}</td>
+                <td class="p-2.5 text-emerald-400 font-bold">${b.start_hour}:00 - ${b.end_hour}:00</td>
+                <td class="p-2.5 text-slate-200">${b.player_name}</td>
+                <td class="p-2.5">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isConfirmed ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'}">
+                    ${b.status}
+                  </span>
+                </td>
+                <td class="p-2.5 text-right">
+                  ${isConfirmed ? `<button onclick="handleCancelBooking(${b.booking_id})" class="px-2 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded text-[10px] transition">Cancel</button>` : `<span class="text-slate-600 text-[10px]">N/A</span>`}
+                </td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = html;
+        })
+        .catch(err => {
+          console.error("Failed to load bookings:", err);
+        });
+    }
+
+    // Create New Booking with Spanner ACID Transaction
+    function handleCreateBooking(e) {
+      e.preventDefault();
+      const courtId = parseInt(document.getElementById("bookCourtId").value);
+      const courtNames = {
+        1: "Center Championship Court",
+        2: "Grandstand Court 2",
+        3: "Training Pavilion Court 3"
+      };
+      const courtName = courtNames[courtId] || `Court ${courtId}`;
+      const bookingDate = document.getElementById("bookDate").value;
+      const startHour = parseInt(document.getElementById("bookStartHour").value);
+      const endHour = parseInt(document.getElementById("bookEndHour").value);
+      const playerName = document.getElementById("bookPlayerName").value.trim();
+
+      const resultBox = document.getElementById("bookingResultMsg");
+      const btn = document.getElementById("btnSubmitBooking");
+
+      if (endHour <= startHour) {
+        resultBox.className = "p-3 rounded-xl text-xs font-mono bg-rose-950/60 border border-rose-800 text-rose-300 block";
+        resultBox.innerText = "⚠️ End hour must be strictly greater than start hour.";
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Committing to Spanner Omni...`;
+
+      fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          court_id: courtId,
+          court_name: courtName,
+          booking_date: bookingDate,
+          start_hour: startHour,
+          end_hour: endHour,
+          player_name: playerName,
+          notes: "Reserved via Web App"
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-lock"></i> Reserve with Spanner ACID Transaction`;
+
+        if (data.success) {
+          resultBox.className = "p-3 rounded-xl text-xs font-mono bg-emerald-950/60 border border-emerald-800 text-emerald-300 block";
+          resultBox.innerHTML = `✅ <strong>Reservation Confirmed!</strong> Spanner TX Booking ID: <code>${data.booking_id}</code>. Zero conflict verified.`;
+          loadBookingsData();
+        } else {
+          resultBox.className = "p-3 rounded-xl text-xs font-mono bg-rose-950/60 border border-rose-800 text-rose-300 block";
+          resultBox.innerHTML = `❌ <strong>Conflict Detected:</strong> ${data.error || "Court is already reserved for this slot."}`;
+        }
+      })
+      .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-lock"></i> Reserve with Spanner ACID Transaction`;
+        resultBox.className = "p-3 rounded-xl text-xs font-mono bg-rose-950/60 border border-rose-800 text-rose-300 block";
+        resultBox.innerText = "Error connecting to Spanner: " + err.message;
+      });
+    }
+
+    // Cancel Booking
+    function handleCancelBooking(bookingId) {
+      if (!confirm(`Cancel booking #${bookingId}? This will update Spanner status.`)) return;
+
+      fetch(`/api/bookings/${bookingId}`, { method: "DELETE" })
+        .then(res => res.json())
+        .then(data => {
+          loadBookingsData();
+        })
+        .catch(err => alert("Error cancelling: " + err.message));
+    }
+
+    // Join Matchmaking Lobby
+    function handleJoinMatch(matchId) {
+      fetch(`/api/matches/${matchId}/join`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ player_name: "You (Challenger)" })
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert(data.message || "Joined match lobby in Spanner Omni!");
+      })
+      .catch(err => alert("Match join note: " + err.message));
+    }
+
+    // Gemini AI Concierge Chat Handler
+    function handleChatSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById("chatInput");
+      const prompt = input.value.trim();
+      if (!prompt) return;
+      input.value = "";
+      askConcierge(prompt);
+    }
+
+    function askConcierge(prompt) {
+      const history = document.getElementById("chatHistory");
+      
+      // Append user bubble
+      history.innerHTML += `
+        <div class="flex items-start gap-3 justify-end">
+          <div class="bg-indigo-600/30 border border-indigo-500/40 p-3 rounded-2xl text-xs text-indigo-100 max-w-xl">
+            <p>${prompt}</p>
+          </div>
+          <div class="w-7 h-7 rounded-lg bg-indigo-600 border border-indigo-400 flex items-center justify-center text-white text-xs shrink-0">
+            👤
+          </div>
+        </div>
+      `;
+      history.scrollTop = history.scrollHeight;
+
+      // Append thinking bubble
+      const thinkingId = `ai_think_${Date.now()}`;
+      history.innerHTML += `
+        <div id="${thinkingId}" class="flex items-start gap-3">
+          <div class="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-xs shrink-0">
+            🤖
+          </div>
+          <div class="bg-slate-900 border border-slate-800 p-3 rounded-2xl text-xs text-slate-400 italic">
+            <i class="fa-solid fa-spinner fa-spin text-emerald-400 mr-1.5"></i> Querying Spanner SQL tables & Gemini reasoning...
+          </div>
+        </div>
+      `;
+      history.scrollTop = history.scrollHeight;
+
+      fetch("/api/ai/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt })
+      })
+      .then(res => res.json())
+      .then(data => {
+        const thinkElem = document.getElementById(thinkingId);
+        if (thinkElem) thinkElem.remove();
+
+        const formatted = (data.response || "No response received.")
+          .replace(/\n\n/g, "<br><br>")
+          .replace(/\n/g, "<br>")
+          .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+          .replace(/\*(.*?)\*/g, "<em>$1</em>");
+
+        history.innerHTML += `
+          <div class="flex items-start gap-3">
+            <div class="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-xs shrink-0">
+              🤖
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-3.5 rounded-2xl text-xs text-slate-200 space-y-2 max-w-xl">
+              <div class="flex items-center justify-between text-[10px] text-slate-400 font-mono pb-1 border-b border-slate-800">
+                <span>${data.ai_source || "Gemini Live"}</span>
+                <span class="text-emerald-400 font-bold">✓ Spanner Synced</span>
+              </div>
+              <p class="leading-relaxed">${formatted}</p>
+            </div>
+          </div>
+        `;
+        history.scrollTop = history.scrollHeight;
+      })
+      .catch(err => {
+        const thinkElem = document.getElementById(thinkingId);
+        if (thinkElem) thinkElem.remove();
+        history.innerHTML += `
+          <div class="flex items-start gap-3">
+            <div class="w-7 h-7 rounded-lg bg-rose-600/30 border border-rose-500/40 flex items-center justify-center text-rose-300 text-xs shrink-0">
+              ⚠️
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-3 rounded-2xl text-xs text-rose-300">
+              Error querying Gemini Concierge: ${err.message}
+            </div>
+          </div>
+        `;
+        history.scrollTop = history.scrollHeight;
+      });
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      renderCourt();
+      const today = new Date().toISOString().split('T')[0];
+      const bookDateInput = document.getElementById("bookDate");
+      if (bookDateInput) bookDateInput.value = today;
+    });
+  </script>
+</body>
+
+</html>
