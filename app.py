@@ -16,8 +16,8 @@ app = Flask(__name__)
 # Spanner Omni Configuration
 # ==========================================
 SPANNER_EMULATOR_HOST = os.getenv("SPANNER_EMULATOR_HOST", "localhost:9010")
-SPANNER_PROJECT = os.getenv("SPANNER_PROJECT", "omni-demo")
-SPANNER_INSTANCE = os.getenv("SPANNER_INSTANCE", "omni-instance")
+SPANNER_PROJECT = os.getenv("SPANNER_PROJECT", "default")
+SPANNER_INSTANCE = os.getenv("SPANNER_INSTANCE", "default")
 SPANNER_DATABASE = os.getenv("SPANNER_DATABASE", "pickleball-db")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
@@ -194,7 +194,7 @@ def init_database_schema_and_seed():
 
         if not database.exists():
             print(f"Creating Spanner database '{SPANNER_DATABASE}' with schema...")
-            op = database.create(ddl_statements=all_ddls)
+            op = instance.database(SPANNER_DATABASE, ddl_statements=all_ddls).create()
             op.result(30)
             print("Spanner Omni Pickleball schema created.")
         else:

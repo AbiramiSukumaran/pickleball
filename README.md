@@ -22,6 +22,11 @@ pip install -r requirements.txt
 ```
 
 ### 2. Setting up Spanner Omni
+
+> **Standalone configuration:** Spanner Omni uses `default` for both its project and instance identifiers. The sample `.env` and `app.py` defaults match this setup. Environment variables can still override these values.
+>
+> Reference: https://docs.cloud.google.com/spanner-omni/client-library-overview
+
 ```bash
 # Create persistent storage volume
 docker volume create spanner_omni_data
@@ -30,7 +35,7 @@ docker pull us-docker.pkg.dev/spanner-omni/images/spanner-omni:2026.r2.1-beta
 
 # Run Spanner Omni in single-server mode
 docker run -d --name spanner-omni \
-  -p 9010:9010 -p 9020:9020 \
+  -p 127.0.0.1:9010:15000 -p 127.0.0.1:9020:15026 \
   -v spanner_omni_data:/spanner \
   us-docker.pkg.dev/spanner-omni/images/spanner-omni:2026.r2.1-beta \
   start-single-server
