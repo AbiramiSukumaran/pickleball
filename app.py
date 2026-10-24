@@ -1197,7 +1197,7 @@ def api_get_performance():
 
 if __name__ == "__main__":
     print("=" * 60)
-    print("  🏓 Starting Spanner Omni Pickleball Game")
+    print("[*] Starting Spanner Omni Pickleball Game")
     print(f"  Spanner Endpoint:  {SPANNER_EMULATOR_HOST}")
     print(f"  Spanner Project:   {SPANNER_PROJECT}")
     print(f"  Spanner Instance:  {SPANNER_INSTANCE}")
