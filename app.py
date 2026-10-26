@@ -34,7 +34,7 @@ if GEMINI_API_KEY and GEMINI_API_KEY != "your-gemini-api-key":
         try:
             import google.generativeai as legacy_genai
             legacy_genai.configure(api_key=GEMINI_API_KEY)
-            ai_client = legacy_genai.GenerativeModel("gemini-3.8-flash")
+            ai_client = legacy_genai.GenerativeModel("gemini-1.5-flash")
         except Exception as e2:
             print(f"Warning initializing Gemini client: {e2}")
 
@@ -194,7 +194,8 @@ def init_database_schema_and_seed():
 
         if not database.exists():
             print(f"Creating Spanner database '{SPANNER_DATABASE}' with schema...")
-            op = database.create(ddl_statements=all_ddls)
+            database = instance.database(SPANNER_DATABASE, ddl_statements=all_ddls)
+            op = database.create()
             op.result(30)
             print("Spanner Omni Pickleball schema created.")
         else:
