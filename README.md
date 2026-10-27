@@ -60,3 +60,28 @@ spanner-omni-project/
 └── templates/
     └── index.html          # 2.5D visual animated court arena
 ```
+
+---
+
+## 🛠️ Troubleshooting & Common Setup Fixes
+
+### 1. Port 9010 / 9020 Conflict When Starting Spanner Omni
+If Spanner Omni fails to start due to existing emulator processes or conflicting Docker containers holding ports `9010` or `9020`, run the following cleanup commands:
+
+```bash
+# Stop background gcloud spanner emulator processes
+pkill -f "spanner" || true
+fuser -k 9010/tcp 9020/tcp 2>/dev/null || true
+
+# Remove conflicting Spanner Docker containers
+docker rm -f spanner-local spanner-omni spanner-omni-local 2>/dev/null || true
+```
+
+### 2. Python Environment & Dependency Installation on Debian/Ubuntu
+If `pip install -r requirements.txt` throws an `externally-managed-environment` error on modern Linux/Cloud Shell environments, use a virtual environment:
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
